@@ -34,7 +34,7 @@ if __name__ == '__main__':
     cellsize = 5.0
 
     # run density split algorithm
-    data_dir = '/home/epaillas/data/AbacusSummit/AbacusSummit_base_c000_ph000/halos/z0.575'
+    data_dir = '/home/jgmorawe/projects/rrg-wperciva/AbacusSummit/AbacusSummit_base_c000_ph000/halos/z0.575'
     data_fn = Path(data_dir, 
         f'halos_base_c{cosmo:03}_ph{phase:03}_z{redshift:.3f}_nden3.2e-04.fits')
 
