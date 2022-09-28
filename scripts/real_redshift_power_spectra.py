@@ -7,6 +7,7 @@ positions for the AbacusSummit data.
 import os
 import numpy as np
 from pypower import CatalogFFTPower
+from pypower import setup_logging
 
 
 if __name__ == '__main__':
@@ -14,7 +15,7 @@ if __name__ == '__main__':
     for split in ['z', 'r']:
         # reads in the quintile data positions
         quintile_path = os.path.join(
-            '/home/jgmorawe/results',
+            '/home/jgmorawe/results/quintiles/',
             'quantiles_{}split_base_c000_ph000_z0.575_nden3.2e-04.npy'.format(
                 split))
         quintile_data = np.load(quintile_path)
@@ -40,9 +41,10 @@ if __name__ == '__main__':
         for i in range(len(density_position_list)):
             density_positions = density_position_list[i]
             density_label = density_labels[i]
+            setup_logging()
             result = CatalogFFTPower(
-                data_positions1=density_positions, 
-                edges=np.linspace(0.05, 1, 150),
+                data_positions1=[density_positions[:, 0], density_positions[:, 1], density_positions[:, 2]], 
+                edges=np.linspace(0.01, 1, 150),
                 boxsize=2000, cellsize=5, los='z')
             wavenumber = result.poles.k
             multipoles = result.poles.power
@@ -59,10 +61,11 @@ if __name__ == '__main__':
         for i in range(len(density_position_list)):
             density_positions = density_position_list[i]
             density_label = density_labels[i]
+            setup_logging()
             result = CatalogFFTPower(
-                data_positions1=density_positions,
-                data_positions2=all_positions,
-                edges=np.linspace(0.05, 1, 150),
+                data_positions1=[density_positions[:, 0], density_positions[:, 1], density_positions[:, 2]],
+                data_positions2=[all_positions[:, 0], all_positions[:, 1], all_positions[:, 2]],
+                edges=np.linspace(0.01, 1, 150),
                 boxsize=2000, cellsize=5, los='z')
             wavenumber = result.poles.k
             multipoles = result.poles.power
