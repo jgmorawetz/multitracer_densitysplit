@@ -61,6 +61,6 @@ if __name__ == '__main__':
         quantiles = ds.get_quantiles(nquantiles=5)
         
         # saves results
-        output_fn = os.path.join('/home/jgmorawe/results',
+        output_fn = os.path.join('/home/jgmorawe/results/quintiles',
             f'quantiles_{split}split_base_c000_ph000_z0.575_nden3.2e-04.npy')
         np.save(output_fn, quantiles)
