@@ -5,9 +5,26 @@ redshift space positions for the AbacusSummit data.
 
 
 import os
+from astropy.io import fits
 import pickle
 import numpy as np
 from pycorr import TwoPointCorrelationFunction
+
+def get_data_positions(data_fn, split='z', los='z'):
+    '''
+    Returns halo positions in real or redshift space.
+    '''
+    with fits.open(data_fn) as hdul:
+        mock_data = hdul[1].data
+        if split == 'z':
+            xgal = mock_data['X_RSD'] if los == 'x' else mock_data['X']
+            ygal = mock_data['Y_RSD'] if los == 'y' else mock_data['Y']
+            zgal = mock_data['Z_RSD'] if los == 'z' else mock_data['Z']
+        else:
+            xgal = mock_data['X']
+            ygal = mock_data['Y']
+            zgal = mock_data['Z']
+    return np.c_[xgal, ygal, zgal]
 
 
 if __name__ == '__main__':
@@ -25,10 +42,15 @@ if __name__ == '__main__':
         ds4_positions = quintile_data[3]
         ds5_positions = quintile_data[4]
         del(quintile_data)
-        # combines quintiles to also give a catalog of all positions combined
-        all_positions = np.vstack((ds1_positions, ds2_positions,
-                                   ds3_positions, ds4_positions,
-                                   ds5_positions))
+        # reads in the 'actual' galaxy positions to cross correlate with
+        # random quintiles
+        data_dir = os.path.join('/home/jgmorawe/projects/rrg-wperciva/',
+                                'AbacusSummit/AbacusSummit_base_c000_ph000/',
+                                'halos/z0.575')
+        # uses cosmo = 0, phase = 0, redshift = 0.575 (may need to adjust)
+        data_fn = os.path.join(data_dir,
+                               'halos_base_c000_ph000_z0.575_nden3.2e-04.fits')
+        all_positions = get_data_positions(data_fn=data_fn, split=split, los='z')
         density_position_list = [ds1_positions, ds2_positions,
                                  ds3_positions, ds4_positions,
                                  ds5_positions]
