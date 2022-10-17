@@ -1,7 +1,7 @@
 """
 This script is used to read in AbacusSummit simulation data (a cube of
 x,y,z positions in redshift and real space), and split the positions into
-density quintiles.
+density quantiles.
 """
 
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
                                 'halos/z0.575')
         # uses cosmo = 0, phase = 0, redshift = 0.575 (may need to adjust)
         data_fn = os.path.join(data_dir,
-                               'halos_base_c000_ph000_z0.575_nden3.2e-04.fits')
+                    'halos_base_c000_ph000_z0.575_nden3.2e-04.fits')
         
         # retrieves x,y,z data positions and counts number of objects
         data_positions = get_data_positions(data_fn=data_fn, split=split, 

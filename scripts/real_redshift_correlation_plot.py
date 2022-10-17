@@ -14,7 +14,7 @@ if __name__ == '__main__':
     
     # makes plot for autocorrelations first
     fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, dpi=300,
-                           figsize=(10, 10))
+                           figsize=(7, 7))
     fig.subplots_adjust(hspace=0, wspace=0)
     colors = ['red', 'orange', 'green', 'blue', 'indigo']
     for i in range(1, 6):
@@ -34,11 +34,15 @@ if __name__ == '__main__':
     ax[0][0].legend()
     ax[0][0].set_title('z-split')
     ax[0][1].set_title('r-split')
+    ax[1][0].set_xlabel(r'$s [h^{-1} Mpc]$')
+    ax[1][1].set_xlabel(r'$s [h^{-1} Mpc]$')
+    ax[0][0].set_ylabel(r'$s^2 \xi_0 (s) [h^{-2} Mpc^2]$')
+    ax[1][0].set_ylabel(r'$s^2 \xi_2 (s) [h^{-2} Mpc^2]$')
     fig.savefig(os.path.join(correlation_path, 'Auto_Plot.png'))
     
     # makes plot for cross correlations next
     fig, ax = plt.subplots(2, 2, sharex=True, sharey=True, dpi=300,
-                           figsize=(10, 10))
+                           figsize=(7, 7))
     fig.subplots_adjust(hspace=0, wspace=0)
     colors=['red', 'orange', 'green', 'blue', 'indigo']
     for i in range(1, 6):
@@ -58,4 +62,8 @@ if __name__ == '__main__':
     ax[0][0].legend()
     ax[0][0].set_title('z-split')
     ax[0][1].set_title('r-split')
+    ax[1][0].set_xlabel(r'$s [h^{-1} Mpc]$')
+    ax[1][1].set_xlabel(r'$s [h^{-1} Mpc]$')
+    ax[0][0].set_ylabel(r'$s^2 \xi_0 (s) [h^{-2} Mpc^2]$')
+    ax[1][0].set_ylabel(r'$s^2 \xi_2 (s) [h^{-2} Mpc^2]$')
     fig.savefig(os.path.join(correlation_path, 'Cross_Plot.png'))
