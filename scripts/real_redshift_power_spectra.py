@@ -67,7 +67,7 @@ if __name__ == '__main__':
            # setup_logging()
             result = CatalogFFTPower(
                 data_positions1=density_positions, 
-                edges=np.linspace(0, 1, 151),
+                edges=np.linspace(0, 0.65, 66),
                 boxsize=2000, cellsize=5, los='z', position_type='pos')
             pickle.dump(result, open(os.path.join(save_path, 'Auto_{0}_{1}.npy'.format(split, density_label)), 'wb'))
          #   wavenumber = result.poles.k

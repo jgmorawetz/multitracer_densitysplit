@@ -8,7 +8,7 @@ import os
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
+#import matplotlib.colors as colors
 
 if __name__ == '__main__':
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     # data vectors 
     n_data = len(os.listdir(power_path))
     # computes dimensions of array
-    n_row = 31 * 2#5
+    n_row = 31 * 5#2
     n_col = n_data
     data_vectors = np.zeros((n_row, n_col))
     
@@ -43,12 +43,12 @@ if __name__ == '__main__':
         pow3 = result3(ell=[0], return_k=False, complex=False)[0][:31]*k**2
         pow4 = result4(ell=[0], return_k=False, complex=False)[0][:31]*k**2
         pow5 = result5(ell=[0], return_k=False, complex=False)[0][:31]*k**2
-        full_pow = np.concatenate((pow1, pow5))#np.concatenate((pow1, pow2, pow3, pow4, pow5))
+        full_pow = np.concatenate((pow1, pow2, pow3, pow4, pow5))#np.concatenate((pow1, pow5))
         data_vectors[:, col_ind] = full_pow
         col_ind += 1
         
     covariance_matrix = np.cov(data_vectors)
-    np.save(os.path.join(matrix_path, 'Cross_Real_Monopole_Covariance.npy'), covariance_matrix)
+    np.save(os.path.join(matrix_path, 'Cross_Real_Monopole_Covariance_all.npy'), covariance_matrix)
     
     fig, ax = plt.subplots(dpi=500)
     #pcm = ax.pcolormesh(np.arange(0, np.shape(covariance_matrix)[0]), np.arange(0, np.shape(covariance_matrix)[0]), covariance_matrix,
@@ -57,7 +57,7 @@ if __name__ == '__main__':
     #                   cmap='RdBu_r', shading='auto')
    # fig.colorbar(pcm, ax=ax[0], extend='both')
     ax.imshow(covariance_matrix)
-    fig.savefig(os.path.join(matrix_path,'Covariance_Matrix_Plot.png'))
+    fig.savefig(os.path.join(matrix_path,'Covariance_Matrix_Plot_all.png'))
     
     
     
