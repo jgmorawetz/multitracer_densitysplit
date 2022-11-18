@@ -1,21 +1,20 @@
 """
-Reads in the AbacusSummit 'small' simulation data (cubes of length 500Mpc/h)
-and splits the halo positions into quintiles using Enrique's density split
-algorithm. For each simulation realization and each density quintile,
-saves the x,y,z coordinates for later use.
+Generates random positions within each quantile.
 """
 
 
+
 import os
-import numpy as np
+import numpy as np; np.random.seed(0)
 from astropy.io import fits
 from densitysplit.pipeline import DensitySplit
 
 
+
 def get_data_positions(data_fn, split='z', los='z'):
-    '''
-    Returns halo positions in real or redshift space.
-    '''
+    """
+    Retrieves halo positions in real or redshift space.
+    """
     with fits.open(data_fn) as hdul:
         mock_data = hdul[1].data
         if split == 'z':
@@ -29,40 +28,54 @@ def get_data_positions(data_fn, split='z', los='z'):
     return np.c_[xgal, ygal, zgal]
 
 
+
 if __name__ == '__main__':
-    split = 'r' # working in real space (for now)
-    boxsize = 500 # length of simulation cube (comoving Mpc/h)
-    smooth_ds = 20 # smoothing radius
-    nquantiles = 5 # number of quantiles to use
-    los = 'z' # line of sight direction
-    cellsize = 5 # size of mesh cells within simulation cube
+
+    # set the relevant parameters
+    boxsize = 500
+    smooth_ds = 20
+    cellsize = 5
+    nquantiles = 5
+    los = 'z'
+    split = 'r'
     
-    # need to change path if using redshift/recon space or changing the number
-    # of quantiles used (for now, real space with five quantiles)
     save_path = '/home/jgmorawe/results/quantiles/quintiles/real'
-    
-    # iterates through all the realizations
     sim_nums = np.arange(3000, 5000)
     sim_path_start = '/home/jgmorawe/projects/rrg-wperciva/AbacusSummit/small'
+    
     for sim_num in sim_nums:
+        
         sim_path = os.path.join(
             sim_path_start,
             'AbacusSummit_small_c000_ph{}/halos/z0.575'.format(sim_num),
             'halos_small_c000_ph{}_z0.575_nden3.2e-04.fits'.format(sim_num))
-        # first checks if simulation exists (some fail), if not skips
+        
         if os.path.exists(sim_path):
-            data_positions = get_data_positions(
+            halo_positions = get_data_positions(
                 data_fn=sim_path, split=split, los=los)
-            densitysplit = DensitySplit(
-                data_positions=data_positions, boxsize=boxsize)
-            density = densitysplit.get_density(
-                smooth_radius=smooth_ds, cellsize=cellsize, 
-                sampling_positions=data_positions)
-            quantiles = densitysplit.get_quantiles(nquantiles=nquantiles)
-            # saves results
-            for i in range(nquantiles):
-                np.save(os.path.join(
-                    save_path, 'sim{0}_ds{1}.npy'.format(sim_num, i+1)),
-                    quantiles[i])
+            ndata = len(halo_positions)
+            ds_object = DensitySplit(
+                data_positions=halo_positions, boxsize=boxsize)
+            random_positions = np.random.uniform(0, boxsize, (5*ndata, 3))
+            density = ds_object.get_density(
+                smooth_radius=smooth_ds, cellsize=cellsize,
+                sampling_positions=random_positions)
+            quantiles = ds_object.get_quantiles(nquantiles=nquantiles)
+            ds1_positions = quantiles[0]
+            ds2_positions = quantiles[1]
+            ds3_positions = quantiles[2]
+            ds4_positions = quantiles[3]
+            ds5_positions = quantiles[4]
+            np.save(os.path.join(
+                save_path, 'sim{}_ds1.npy'.format(sim_num)), ds1_positions)
+            np.save(os.path.join(
+                save_path, 'sim{}_ds2.npy'.format(sim_num)), ds2_positions)
+            np.save(os.path.join(
+                save_path, 'sim{}_ds3.npy'.format(sim_num)), ds3_positions)
+            np.save(os.path.join(
+                save_path, 'sim{}_ds4.npy'.format(sim_num)), ds4_positions)
+            np.save(os.path.join(
+                save_path, 'sim{}_ds5.npy'.format(sim_num)), ds5_positions)
+
         else:
-            print('Simulation {} failed!'.format(sim_num))
+            print('Simulation {} failed.'.format(sim_num))

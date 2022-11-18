@@ -1,23 +1,21 @@
 """
-This script compares what the density contrast looks like if we the field is
-smoothed according to the actual halo positions in each quintile versus being 
-smoothed according to random positions (which are 'partitioned' into the 
-quintiles of the actual halo field).
+This script makes a cross section plot of the density quintiles.
 """
 
 
 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 from astropy.io import fits
 from densitysplit.pipeline import DensitySplit
-import matplotlib.pyplot as plt
+
 
 
 def get_data_positions(data_fn, split='z', los='z'):
-    '''
-    Returns halo positions in real or redshift space.
-    '''
+    """
+    Retrieves halo positions in real or redshift space.
+    """
     with fits.open(data_fn) as hdul:
         mock_data = hdul[1].data
         if split == 'z':
@@ -31,87 +29,102 @@ def get_data_positions(data_fn, split='z', los='z'):
     return np.c_[xgal, ygal, zgal]
 
 
+
 if __name__ == '__main__':
+    
+    # set the relevant parameters
     split = 'r'
+    los = 'z'
     boxsize = 500
     smooth_ds = 20
     nquantiles = 5
-    los = 'z'
     cellsize = 5
+    sim_num = 3808
+    cross_section_dim = 'z'
+    cross_section_val = boxsize/2
     
-    for sim_num in range(3800, 3810):
-        try:
-            #sim_num = 3988 # doesn't matter which realization we use for now
-            data_fn = '/home/jgmorawe/projects/rrg-wperciva/AbacusSummit/small/AbacusSummit_small_c000_ph{0}/halos/z0.575/halos_small_c000_ph{1}_z0.575_nden3.2e-04.fits'.format(sim_num, sim_num)
-            
-            halo_positions = get_data_positions(data_fn=data_fn, split=split, los=los)
-            ndata = len(halo_positions)
-            
-            random_x = np.random.uniform(0, boxsize, 500000)
-            random_y = np.random.uniform(0, boxsize, 500000)
-            random_z = np.array([250 for i in range(500000)])
-            random_samples = np.vstack((random_x, random_y, random_z)).T
-            
-            ds = DensitySplit(halo_positions, boxsize)
-            density = ds.get_density(smooth_radius=smooth_ds, cellsize=cellsize,
-                                     sampling_positions=random_samples)
-            quantiles = ds.get_quantiles(nquantiles=5)
-            
-            fig, ax = plt.subplots(1, 3, sharex=True, sharey=True, figsize=(15,5),dpi=300)
-            inds = ((halo_positions[:, 2] < 260) & (halo_positions[:, 2] > 240))
-            ax[0].plot(halo_positions[:,0][inds], halo_positions[:,1][inds], 'o', markersize=1)
-            ax[1].scatter(x=random_x, y=random_y, s=0.1, c=density)
-            ax[2].plot(quantiles[0][:,0], quantiles[0][:,1], 'o', markersize=1, color='red')
-            ax[2].plot(quantiles[1][:,0], quantiles[1][:,1], 'o', markersize=1, color='orange')
-            ax[2].plot(quantiles[2][:,0], quantiles[2][:,1], 'o', markersize=1, color='green')
-            ax[2].plot(quantiles[3][:,0], quantiles[3][:,1], 'o', markersize=1, color='blue')
-            ax[2].plot(quantiles[4][:,0], quantiles[4][:,1], 'o', markersize=1, color='indigo')
-            fig.savefig('/home/jgmorawe/results/cross_section/cross_sections_density_{}.png'.format(sim_num))
-            
-            """
-            # first we split the 'actual' halo positions into the different density quintiles
-            ds = DensitySplit(halo_positions, boxsize)
-            density = ds.get_density(smooth_radius=smooth_ds, cellsize=cellsize,
-                                          sampling_positions=halo_positions)
-            quantiles_halo = ds.get_quantiles(nquantiles=5) # ACTUAL HALO POSITION QUINTILES
-            
-            
-            # now we partition randoms into the density quintiles of the smoothed field of actual halo field
-            random_positions = np.random.uniform(0, boxsize, (5*ndata, 3))
-            ds = DensitySplit(halo_positions, boxsize)
-            density = ds.get_density(smooth_radius=smooth_ds, cellsize=cellsize,
-                                          sampling_positions=random_positions)
-            quantiles_rand = ds.get_quantiles(nquantiles=5) # RANDOM POSITION QUINTILES
-            
-            
-            # now that we have the quintiles of both the halos and randoms, we now
-            # run the density field again, to compute the smoothed density contrast
-            # for each case to see if they are similar (and plots several cross sections)
-            ds1_halo = DensitySplit(quantiles_halo[0], boxsize)
-            ds5_halo = DensitySplit(quantiles_halo[-1], boxsize)
-            
-            ds1_rand = DensitySplit(quantiles_rand[0], boxsize)
-            ds5_rand = DensitySplit(quantiles_rand[-1], boxsize)
-            
-            # cross section positions to use
-            random_x = np.random.uniform(0, boxsize, 300000)
-            random_y = np.random.uniform(0, boxsize, 300000)
-            random_z = np.array([250 for i in range(300000)])
-            random_samples = np.vstack((random_x, random_y, random_z)).T
-            
-            ds1_halo_density = ds1_halo.get_density(smooth_radius=smooth_ds, cellsize=cellsize, sampling_positions=random_samples)
-            ds5_halo_density = ds5_halo.get_density(smooth_radius=smooth_ds, cellsize=cellsize, sampling_positions=random_samples)
-            ds1_rand_density = ds1_rand.get_density(smooth_radius=smooth_ds, cellsize=cellsize, sampling_positions=random_samples)
-            ds5_rand_density = ds5_rand.get_density(smooth_radius=smooth_ds, cellsize=cellsize, sampling_positions=random_samples)
-            
-            fig, ax = plt.subplots(2, 3, dpi=300, sharex=True, sharey=True, figsize=(10,7))
-            ax[0][0].scatter(x=random_samples[:,0], y=random_samples[:,1], s=0.1, c=ds1_halo_density)
-            ax[0][1].scatter(x=random_samples[:,0], y=random_samples[:,1], s=0.1, c=ds5_halo_density)
-            ax[0][1].scatter(x=quantiles_halo[0]
-            ax[1][0].scatter(x=random_samples[:,0], y=random_samples[:,1], s=0.1, c=ds1_rand_density)
-            ax[1][1].scatter(x=random_samples[:,0], y=random_samples[:,1], s=0.1, c=ds5_rand_density)
-            fig.savefig('/home/jgmorawe/results/cross_section/cross_sections_density_{}.png'.format(sim_num))
-            """
-        except:
-            continue
+    save_path = os.path.join('/home/jgmorawe/results/plot_data',
+                             'cross_section_sim{0}_z={1}.png'.format(
+                                 sim_num, int(cross_section_val)))
     
+    data_fn = os.path.join(
+        '/home/jgmorawe/projects/rrg-wperciva/AbacusSummit/small',
+        'AbacusSummit_small_c000_ph{}/halos/z0.575'.format(sim_num),
+        'halos_small_c000_ph{}_z0.575_nden3.2e-04.fits'.format(sim_num))
+    
+    halo_positions = get_data_positions(data_fn=data_fn, split=split, los=los)
+    ds_object = DensitySplit(data_positions=halo_positions, boxsize=boxsize)
+    
+    grid_dim = 500
+    
+    fig, ax = plt.subplots(nrows=1, ncols=3, sharex=True, sharey=True,
+                           figsize=(17, 5), dpi=500, 
+                           gridspec_kw={'width_ratios': [1, 1.2, 1]})
+    fig.subplots_adjust(wspace=0.1)
+    
+    if cross_section_dim == 'z':
+        x_centres = np.linspace(0, boxsize, grid_dim)
+        y_centres = np.linspace(0, boxsize, grid_dim)
+        xy_grid = np.meshgrid(x_centres, y_centres)
+        sampling_x = xy_grid[0].flatten()
+        sampling_y = xy_grid[1].flatten()
+        sampling_z = np.array([cross_section_val for i in range(grid_dim**2)])
+        sampling_positions = np.vstack((sampling_x, sampling_y, sampling_z)).T
+        density = ds_object.get_density(
+            smooth_radius=smooth_ds, cellsize=cellsize,
+            sampling_positions=sampling_positions)
+        quantiles = ds_object.get_quantiles(nquantiles=nquantiles)
+        density1 = ds_object.get_density(
+            smooth_radius=smooth_ds, cellsize=cellsize, 
+            sampling_positions=quantiles[0])
+        density2 = ds_object.get_density(
+            smooth_radius=smooth_ds, cellsize=cellsize, 
+            sampling_positions=quantiles[1])
+        density3 = ds_object.get_density(
+            smooth_radius=smooth_ds, cellsize=cellsize, 
+            sampling_positions=quantiles[2])
+        density4 = ds_object.get_density(
+            smooth_radius=smooth_ds, cellsize=cellsize, 
+            sampling_positions=quantiles[3])
+        density5 = ds_object.get_density(
+            smooth_radius=smooth_ds, cellsize=cellsize, 
+            sampling_positions=quantiles[4])
+        avg_dens1 = np.mean(density1)
+        avg_dens2 = np.mean(density2)
+        avg_dens3 = np.mean(density3)
+        avg_dens4 = np.mean(density4)
+        avg_dens5 = np.mean(density5)
+        avg_densities = [avg_dens1, avg_dens2, avg_dens3, avg_dens4, avg_dens5]
+        halo_positions_slice = halo_positions[
+            (halo_positions[:, 2] < cross_section_val + smooth_ds/2) &
+            (halo_positions[:, 2] > cross_section_val - smooth_ds/2)]
+        ax[0].plot(halo_positions_slice[:, 0], halo_positions_slice[:, 1], 'o', 
+                   color='black', markersize=2)
+        cmap='turbo'
+        im=ax[1].scatter(x=sampling_x, y=sampling_y, s=2, c=density, cmap=cmap, 
+                         vmin=-1, vmax=4, marker='s')
+        fig.colorbar(im, ax=ax[1], pad=0.025)
+        for i, mean_dens in zip(range(0, 5), avg_densities):
+            size = len(quantiles[i][:,0])
+            ax[2].scatter(x=quantiles[i][:, 0], y=quantiles[i][:, 1], s=2, 
+                          c=np.full(size, mean_dens),
+                          cmap=cmap, label='DS{}'.format(i+1), vmin=-1, vmax=4, 
+                          marker='s')
+        ax[0].set_xlim(0, boxsize); ax[0].set_ylim(0, boxsize)
+        ax[1].set_xlim(0, boxsize); ax[1].set_ylim(0, boxsize)
+        ax[2].set_xlim(0, boxsize); ax[2].set_ylim(0, boxsize)
+        ax[0].set_ylabel('Y (Mpc/h)')
+        ax[0].set_xlabel('X (Mpc/h)')
+        ax[1].set_xlabel('X (Mpc/h)')
+        ax[2].set_xlabel('X (Mpc/h)')
+        ax[0].set_title(r'Halo Positions: Z $\in$ ({0},{1})'.format(
+            int(cross_section_val - smooth_ds/2), 
+            int(cross_section_val + smooth_ds/2)))
+        ax[1].set_title('Smoothed Overdensity: Z={0}, $R_s$ = {1}'.format(
+            int(cross_section_val), int(smooth_ds)))
+        ax[2].set_title('Quintiles')
+        ax[2].legend()
+        fig.savefig(save_path)
+                    
+    else:
+        print('Must plot for a z cross section.')

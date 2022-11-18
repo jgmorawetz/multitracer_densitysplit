@@ -1,8 +1,7 @@
 """
-Generates cross power spectra for the density quantiles (the positions are 
-generated randomly, and then partitioned into quantiles according to the 
-underlying smoothed density field of the halo positions).
+Generates auto and cross power spectra for the DS quantiles.
 """
+
 
 
 import os
@@ -10,12 +9,14 @@ import time
 import pickle
 import numpy as np
 from astropy.io import fits
-from densitysplit.pipeline import DensitySplit
 from pypower import CatalogFFTPower
 
 
 
 def get_data_positions(data_fn, split='z', los='z'):
+    """
+    Retrieves halo positions in real or redshift space.
+    """
     with fits.open(data_fn) as hdul:
         mock_data = hdul[1].data
         if split == 'z':
@@ -34,62 +35,121 @@ if __name__ == '__main__':
     
     t0 = time.time()
     
+    # set the relevant parameters
+    boxsize = 500
+    smooth_ds = 20
+    cellsize = 5
+    los = 'z'
+    split = 'r'
+    
     sim_folder_path = '/home/jgmorawe/projects/rrg-wperciva/AbacusSummit/small'
-    power_folder_path = '/home/jgmorawe/results/power_spectra/real'
+    quantile_path = '/home/jgmorawe/results/quantiles/quintiles/real'
+    power_folder_path = '/home/jgmorawe/results/power_spectra/monopole/real'
     
-    boxsize = 500 # size of simulation cube
-    smooth_ds = 20 # smoothing radius
-    cellsize = 5 # cell size within the simulation cube
-    los = 'z' # line of sight direction
-    split = 'r' # real space (deal with redshift/reconstruction space later)
-    
-    # iterates through each simulation realization (some have errors)
-    for sim_num in np.arange(3000, 5000):
+    for sim_num in range(3000, 5000):
         
         sim_path = os.path.join(
-            sim_folder_path, 
+            sim_folder_path,
             'AbacusSummit_small_c000_ph{}/halos/z0.575'.format(sim_num),
             'halos_small_c000_ph{}_z0.575_nden3.2e-04.fits'.format(sim_num))
         
         if os.path.exists(sim_path):
-            
+            # halo and quintile positions
             halo_positions = get_data_positions(
-                data_fn=sim_path, split='r', los='z')
-            ndata = len(halo_positions)
-            ds_object = DensitySplit(
-                data_positions=halo_positions, boxsize=boxsize)
-            # generates random positions to fill up the sample volume
-            random_positions = np.random.uniform(0, boxsize, (5*ndata, 3))
-            density = ds_object.get_density(
-                smooth_radius=smooth_ds, cellsize=cellsize,
-                sampling_positions=random_positions)
-            quantiles = ds_object.get_quantiles(nquantiles=5)
-            ds1_positions = quantiles[0]
-            ds5_positions = quantiles[-1]
+                data_fn=sim_path, split=split, los=los)
+            ds1_positions = np.load(
+                os.path.join(quantile_path, 'sim{}_ds1.npy'.format(sim_num)))
+            ds2_positions = np.load(
+                os.path.join(quantile_path, 'sim{}_ds2.npy'.format(sim_num)))
+            ds3_positions = np.load(
+                os.path.join(quantile_path, 'sim{}_ds3.npy'.format(sim_num)))
+            ds4_positions = np.load(
+                os.path.join(quantile_path, 'sim{}_ds4.npy'.format(sim_num)))
+            ds5_positions = np.load(
+                os.path.join(quantile_path, 'sim{}_ds5.npy'.format(sim_num)))
             
+            edges = np.arange(2*np.pi/boxsize, 
+                              2*np.pi/(boxsize/10)+2*np.pi/boxsize,
+                              2*np.pi/boxsize)
+            
+            # power spectrum of each quintile with halo positions
             cross1 = CatalogFFTPower(
                 data_positions1=ds1_positions, data_positions2=halo_positions,
-                edges=np.arange(2*np.pi/boxsize, 2*np.pi/(smooth_ds/2),
-                                2*np.pi/boxsize),
-                ells=(0), los=los, boxsize=boxsize, cellsize=cellsize,
-                position_type='pos')
-            
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            cross2 = CatalogFFTPower(
+                data_positions1=ds2_positions, data_positions2=halo_positions,
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            cross3 = CatalogFFTPower(
+                data_positions1=ds3_positions, data_positions2=halo_positions,
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            cross4 = CatalogFFTPower(
+                data_positions1=ds4_positions, data_positions2=halo_positions,
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
             cross5 = CatalogFFTPower(
                 data_positions1=ds5_positions, data_positions2=halo_positions,
-                edges=np.arange(2*np.pi/boxsize, 2*np.pi/(smooth_ds/2),
-                                2*np.pi/boxsize),
-                ells=(0), los=los, boxsize=boxsize, cellsize=cellsize,
-                position_type='pos')
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            
+            # auto spectrum of each quintile with itself (real space)
+            auto1 = CatalogFFTPower(
+                data_positions1=ds1_positions, 
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            auto2 = CatalogFFTPower(
+                data_positions1=ds2_positions, 
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            auto3 = CatalogFFTPower(
+                data_positions1=ds3_positions, 
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            auto4 = CatalogFFTPower(
+                data_positions1=ds4_positions, 
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            auto5 = CatalogFFTPower(
+                data_positions1=ds5_positions, 
+                edges=edges, ells=(0), los=los, boxsize=boxsize, 
+                cellsize=cellsize, position_type='pos')
+            
+            # saves to file for later usage
+            pickle.dump(
+                cross1, open(os.path.join(power_folder_path, 
+                'sim{}_cross_ds1halo.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                cross2, open(os.path.join(power_folder_path, 
+                'sim{}_cross_ds2halo.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                cross3, open(os.path.join(power_folder_path, 
+                'sim{}_cross_ds3halo.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                cross4, open(os.path.join(power_folder_path, 
+                'sim{}_cross_ds4halo.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                cross5, open(os.path.join(power_folder_path, 
+                'sim{}_cross_ds5halo.pkl'.format(sim_num)), 'wb'))
             
             pickle.dump(
-                cross1,
-                open(os.path.join(power_folder_path, 'sim{}_monopole_cross_ds1.pkl'.format(sim_num)), 'wb'))
+                auto1, open(os.path.join(power_folder_path, 
+                'sim{}_auto_ds1.pkl'.format(sim_num)), 'wb'))
             pickle.dump(
-                cross5,
-                open(os.path.join(power_folder_path, 'sim{}_monopole_cross_ds5.pkl'.format(sim_num)), 'wb'))
+                auto2, open(os.path.join(power_folder_path, 
+                'sim{}_auto_ds2.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                auto3, open(os.path.join(power_folder_path, 
+                'sim{}_auto_ds3.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                auto4, open(os.path.join(power_folder_path, 
+                'sim{}_auto_ds4.pkl'.format(sim_num)), 'wb'))
+            pickle.dump(
+                auto5, open(os.path.join(power_folder_path, 
+                'sim{}_auto_ds5.pkl'.format(sim_num)), 'wb'))
             
         else:
             print('Simulation {} failed.'.format(sim_num))
-
-
-    print('Script executed in {} seconds.'.format(round(time.time()-t0, 1)))
+    
+    print('Script executed in {} seconds.'.format(time.time()-t0))
