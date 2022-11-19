@@ -1,2 +1,2 @@
 # multitracer_densitysplit
-Contains codes and relevant work for the Phys 437A research project in Fall 2022 at UWaterloo, with James Morawetz, Dr. Will Percival and Dr. Enrique Paillas, working with the multitracer and density split cosmology methods.
+Contains codes and relevant work for the Phys 437A research project in Fall 2022 at UWaterloo, under supervision of Professor Will Percival and Postdoc Enrique Paillas, from the Large-Scale Structure Group. Work focuses on using AbacusSummit simulations to test the improvement on cosmological constraints provided by the Multi-Tracer method, when using halo catalogues to generate density environments (quantiles) and using these as biased tracers of matter density.
